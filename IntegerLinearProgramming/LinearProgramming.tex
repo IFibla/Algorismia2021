@@ -1,0 +1,156 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{listings}
+\usepackage{amsmath} 
+\usepackage{algorithm}
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}
+\renewcommand{\algorithmicforall}{\textbf{for each}}
+
+\begin{document}
+
+\section{Matrius i sistemes d'equacions}
+\subsection{Resolució de sistemes d'equacions}
+    Suposarem l'existencia d'un sistema d'equacions lineals amb n incognites, anomenades $x_1, x_2, ..., x_n$. Entendrem per solució del sistema un conjunt de valors $x_1, x_2, ..., x_n$ tals que satisfacin totes les equacions simultaneament. \\ \\
+    Existeixen múltipes mètodes per solucionar sistemes d'equacions, des de mètodes d'igualació, reducció i substitució fins a mètodes gràfics, malgrat que per sistemes d'equacions amb poques incognites són mètodes més que plausibles, a mesura que el sistema d'equacions d'escrit creix en nombre d'incognites aquestes solucions deixen de ser trivials i començen a esdevenir molt costos de calcular. Els mètodes utilitzats per solucionar eficientment aquests sistemes fan ús de matrius per tal de solucionar-los. Però abans de res s'haurà de presentar la forma d'equivalencia entre un sistema d'equacions i una matriu.
+    \begin{equation}
+        \left\{\begin{matrix}
+            a_{1,1} & a_{1,2} & ... & a_{1,n-1} & a_{1,n} & = & b_1 \\ 
+            a_{2,1} & a_{2,2} & ... & a_{2,n-1} & a_{2,n} & = & b_2 \\ 
+            ... & ... & ... & ... & ... & = & ... \\ 
+            a_{n-1,1} & a_{n-1,2} & ... & a_{n-1,n-1} & a_{n-1,n} & = & b_{n-1} \\ 
+            a_{n,1} & a_{n,2} & ... & a_{n,n-1} & a_{n,n} & = & b_n
+        \end{matrix}\right.
+    \end{equation}
+    \begin{equation}
+        \begin{pmatrix}
+            a_{1,1} & a_{1,2} & ... & a_{1,n-1} & a_{1,n}\\ 
+            a_{2,1} & a_{2,2} & ... & a_{2,n-1} & a_{2,n}\\ 
+            ... & ... & ...  & ... & ... \\ 
+            a_{n-1,1} & a_{n-1,2} & ... & a_{n-1,n-1} & a_{n-1,n}\\ 
+            a_{n,1} & a_{n,2} & ... & a_{n,n-1} & a_{n,n} 
+        \end{pmatrix} \cdot 
+        \begin{pmatrix}
+            x_1 \\ x_2\\ ...\\ x_{n-1}\\ x_{n}
+        \end{pmatrix} =
+        \begin{pmatrix}
+            b_1\\ b_2\\ ...\\ b_{n-1}\\ b_n
+        \end{pmatrix}
+    \end{equation}
+    El sistema d'equacions \texttt{(1)} i el conjunt de matrius \texttt{(2)} són equivalent, i si resolguessim les incognites de ambdos sistemes obtindriem el mateix resultat en el conjunt de $n$ incognites $x_1, x_2, ..., x_{n-1}, x_{n}$. A més a més, és important recordar el rang d'una matriu ( \texttt{rang(M)} ) i quines conseqüències té en la resolució del sistema d'equacions plantejat. 
+    \begin{itemize}
+        \item \texttt{rang(A) < n:} Direm que el sistema és indeterminat, és a dir, té un nombre infinit de solucions.
+        \item \texttt{rang(A) = n:} Direm que el sistema és determinat, és a dir, té una única solució.
+        \item \texttt{rang(A) > n:} Direm que el sistema és incompatible, és a dir, no té cap solució.
+    \end{itemize}
+    Ja per acabar amb el repàs de les propietats dels sistemes d'equacions i les matrius, cal destacar que tenir un sistema d'equacions en forma de matriu és equivalent a dir:
+    \begin{equation}
+    \begin{matrix}
+        A \cdot x = b  & \textup{on:} & A = (a_{i,j})\\ 
+        & & x = x_i \\
+        & & b = ( b_i )
+    \end{matrix}
+    \end{equation}
+    Si la matriu $A$ no és singular \footnote{Una matriu no sigular és una matriu quadrada el determinant del qual no és zero. El rang de la matriu $A$ és igual a l'ordre de la submatriu no singular més gran de $A$. Per tant, podem deduïr que la matriu quadrada no singular de $n\times n$ té un rang de $n$. Així, una matriu no singular també es coneix com a matriu de rang complet. Per a una matriu $A$ no quadrada de $m \times n$, on $ m > n$, el rang complet significa que només $n$ columnes són independents.}, és a dir, existeix una matriu $A^{-1}$, llavors:
+    \begin{equation}
+        x = A^{-1} \cdot b
+    \end{equation}
+    serà el vector solució del sistema d'equacions. És pot demostrar que $x$ és la única solució suposant l'existencia de dos vectors solució, anomenats $x$ i $x'$. Aquesta suposició ens permet afirmar que $A \cdot x = A \cdot x' = b$, seguint la propietat de l'equació \texttt{(3)}. A partir d'aqui i, fent ús de la matriu identitat $I$:
+    \begin{equation}
+        \begin{matrix}
+            x & = & Ix \\
+            & = & ( A^{-1} A ) x \\
+            & = & A^{-1} ( A x ) \\
+            & = & A^{-1} ( A x' ) \\
+            & = & ( A^{-1} A ) x' \\
+            & = & x'
+        \end{matrix}
+    \end{equation}
+    Malgrat que el mètode que s'acaba de presentar sembla bastant senzill de implementar, i amb un cost computacional assequible, a la practica no és així. I, com a conseqüència és va idear el mètode conegut com a \texttt{LUP decomposition}. Un mètode que s'explicarà en seccions posteriors. \\ \\
+    Ja per acabar amb aquesta secció, definirem una serie de conceptes que ens seran útils de cara a entre l'algorisme de \texttt{LUP decomposition}.
+    \begin{itemize}
+        \item \texttt{Matriu triangular superior:} Matriu quadrada ( $n \times n$ ) tal que $\forall i,j \in {1,2,...n-1,n} : (i > j \rightarrow a_{i,j}=0)$.
+        \item \texttt{Matriu triangular superior unitaria:} Matriu quadrada ( $n \times n$ ) tal que $\forall i,j \in {1,2,...n-1,n} : (i > j \rightarrow a_{i,j}=0) \wedge (i == j \rightarrow a_{i,j}=1$). 
+        \item \texttt{Matriu triangular inferior:} Matriu quadrada ( $n \times n$ ) tal que $\forall i,j \in {1,2,...n-1,n} : (i < j \rightarrow a_{i,j}=0$). 
+        \item \texttt{Matriu triangular inferior unitaria:} Matriu quadrada ( $n \times n$ ) tal que $\forall i,j \in {1,2,...n-1,n} : (i < j \rightarrow a_{i,j}=0) \wedge (i = j \rightarrow a_{i,j}=1)$. 
+        \item \texttt{Matriu permutació:} Matriu quadrada amb tots els seus $n \times n$ elements iguals a 0, excepte un qualsevol per cada fila i columna, el qual ha de ser igual a 1.
+    \end{itemize}
+\subsection{Forward and back substituation}
+    Entenem per "forward substituation" el process de solució d'un sistema d'equacions $Lx=y$ on la matriu $L$ és triangular inferior. La forma triangular de $L$ assegura que el procés de resolució del sistema d'equacions és una modificació del mètode de substitució general i aquest procés es pot descriure mitjançant formules senzilles. \\ \\ 
+    D'altra banda, la "back substituation" és un procediment per resoldre un sistema d'equacions lineals $U \cdot x = y$, on $U$ és una matriu triangular superior. La matriu $U$ pot ser un factor d'una altra matriu A en la seva descomposició $LU$, on $L$ és una matriu triangular inferior. \\ \\
+    Donades $P$, $L$, $U$ i b, creerem un algorisme que resolgui per x mitjançant la combinació dels dos mètodes que acabem d'esmentar. El pseudocodi assumeix que la dimensió $n$ apareix en la longitud de $L$. A partir d'aqui, descriurem el següent pseudo-codi: 
+    \begin{algorithm}[h]
+        \caption{LUP\-SOLVE(L,U,P,b)}
+        \begin{algorithmic}[1]
+            \State{n=L.rows}
+            \State{let x be a new vector of length n}
+            \ForAll{$i \in {1...n}$}
+                \State{$y_i=b_{P[i]}-\sum_{j=1}^{i-1}l_{i,j}y_{i}$}
+            \EndFor
+            \ForAll{$i \in {n..1}$}
+                \State{$x_i=\frac{y_i-\sum_{j=i+1}^{u} u_{i,j}x_{j}}{u_{i,i}}$}
+            \EndFor
+            \State{return x}
+        \end{algorithmic}
+    \end{algorithm} \\
+    Aquest algorisme aplica "forward substituation" a les linies 3 i 4, en canvi, aplica "back substituation" a les linies 5 i 6. Al tenir dos bucles \texttt{for} de mida $n$ direm que el cost temporal de l'execució del algorisme \texttt{LUP-SOLVE} és equivalent a $\Theta(n^2)$.
+
+\subsection{LUP decomposition}
+    En l'algebra lineal i l'analisis númeric, entenem per la \texttt{LUP decomposition} el producte d'una matriu triangular inferior unitaria, a partir d'ara l'anomenarem $L$, una matriu triangular superior, a partir d'ara l'anomenarem $U$, i una matriu permutació, a partir d'ara l'anomenarem $P$, mitjançant la següent igualtat
+    \begin{equation}
+        P \cdot A = L \cdot U
+    \end{equation}
+    Una vegada s'ha trobat una decomposició òptima per la matriu $A$ es pot solucionar el sistema mitjançant l'equació \texttt{(3)}, calculant únicament sistemes lineals trianguars, tals que:
+    \begin{equation*}
+        A \cdot x = b
+    \end{equation*}
+    Si múltiplem a les dues bandes per la matriu permutació $P$ obtenim:
+    \begin{equation*}
+        P \cdot A \cdot x = P \cdot b
+    \end{equation*}
+    Mitjançant l'equació \texttt{(6)}, podem substituïr $P \cdot A$ per $L \cdot U$ amb lo que tindrem:
+    \begin{equation*}
+        L \cdot U \cdot x = P \cdot b
+    \end{equation*}
+    A partir d'aquí el problema inicial s'ha simplificat, ja que la solució es redueix a solucionar dos sistemes d'equacions lineals amb matrius triangular. Per tant, definirem l'existencia de $y = U \cdot x$, on la variable $x$ segueix sent el vector resultat.
+    \begin{equation*}
+        L \cdot y = P \cdot b
+    \end{equation*}
+    Mitjançant la utilització de "forward substitution" haurem solucionat per $y$, llavors solucionarem el sistema triangular superior mitjançant la "back substituation". A més, com que tota matriu permutació ha de ser invertible i, el producte d'una matriu per la seva inversa dona la matriu identitat, podrem dir:
+    \begin{equation*}
+        A = P^{-1} \cdot L \cdot U
+    \end{equation*}
+    Aquesta equació és equivalent a la decomposició òptima per la matriu A, i gràcies a això podrem solucionar rapidament el sistema lineal d'equacions seguint el següent procediment:
+    \begin{equation}
+        \begin{matrix}
+            Ax & = & P^{-1} \cdot L \cdot U \cdot x \\
+            & = & P^{-1} \cdot L \cdot y \\ 
+            & = & P^{-1} \cdot P \cdot b \\
+            & = & b
+        \end{matrix}
+    \end{equation}
+    
+\subsection{LU decomposition}
+    S'acaba de demostrar que a partir de la descomposició de les tres matrius $L$, $U$ i $P$, per una matriu no singular $A$, mitjançant els processos de "forward substitution" i "back substitution" ens permet solucionar el sistema d'equacions lineals $A \cdot x = b$. D'ara en endavant intentarem millorar els algorismes utilitzats per la solució d'aquest problema. \\ \\
+    Començarem amb una matriu no singular A, de mida $n\times n$, i una matriu permutació $P$, la qual serà equivalent a la identitat. En aquest cas, conegut com a \texttt{LU decomposition}, la factorització de la matriu és equivalent a $A = L \cdot U$. Una forma molt eficient de solucionar aquest cas és fent ús de la \texttt{Gaussian elimination}, també conegut com el mètode de reducció de Gauss. \\ \\
+    L'algorisme que implementarem per fer la \texttt{Guassian elimination} és de tipus recursiu. El cas base d'aquest algorisme ens el trobarem en una matriu, en la que $n = 1$, i la solució es trivial, ja que $L = I_1$ i $U = A$. En canvi, per un $n > 1$, haurem de dividir la matriu en 4 parts, tals que:
+    \begin{equation}
+        A=\begin{pmatrix}
+        a_{1,1} & \vline & a_{1,2} & & ... & & a_{1,n}\\ 
+        \hline 
+        a_{2,1} & \vline & a_{2,2} & & ... & &  a_{2,n}\\ 
+        ... & \vline & ... & & ... & & ...\\ 
+        a_{n,1} & \vline & a_{n,2} & & ... & & a_{n,n}
+        \end{pmatrix} = \begin{pmatrix}
+        a_{1,1} & w^T\\ 
+        v & A'
+        \end{pmatrix}
+    \end{equation}
+    De la matriu resultant de dividir la matriu A en quatre blocs definirem:
+    \begin{itemize}
+        \item \texttt{$v$:} Vector de la columna de $n-1$ elements.
+        \item \texttt{$w^T$:} Vector de la fila de $n-1$ elements.
+        \item \texttt{A'}: Matriu de $(n-1) \times (n-1)$.
+    \end{itemize}
+\end{document}
+
