@@ -7,6 +7,12 @@ using namespace std;
 using Adjacencia = set<int>;
 using Graf = vector<Adjacencia>;
 
+bool isMinimalPositiveInfluenceDominatingSet(const Graf& G, const set<int>& D, vector<bool>& vistat) {
+
+    bool esMPIDS = true;
+
+    return esMPIDS;
+}
 
 bool isPositiveInfluenceDominatingSet(const Graf& G, const set<int>& D, vector<bool>& visitat) {
 
@@ -15,8 +21,8 @@ bool isPositiveInfluenceDominatingSet(const Graf& G, const set<int>& D, vector<b
     S.push(0);
     bool esPIDS = true;                             // Comencem assumint que ho es
 
-    while (not S.empty() and esPIDS) {
-
+    while (not S.empty() and esPIDS) {              // mentre la pila estigui plena i tots els vertexs
+                                                    // visitats fins ara tinguin com a minim la meitat de les adjacencies a D
         int v = S.top();
         S.pop();
 
@@ -36,8 +42,7 @@ bool isPositiveInfluenceDominatingSet(const Graf& G, const set<int>& D, vector<b
 
             int nAdjacenciesTotals = G[v].size();
 
-            double proporcioAdjaD = double(nAdjacenciesD)/double(nAdjacenciesD);
-            cout << "Proporcio graus adj vertex " << v << " " << proporcioAdjaD << " " << nAdjacenciesD << endl;
+            double proporcioAdjaD = double(nAdjacenciesD)/double(nAdjacenciesTotals);
             if (proporcioAdjaD < 0.5) esPIDS = false;
 
         }
@@ -75,24 +80,11 @@ int main() {
     }
 
     vector<bool> visitat(n, false);
-/*
-    for (int i = 0; i < n; ++i) {
-        cout << "VERTEX " << i << endl;
-        cout << "Arestes ";
-        for (int aresta : G[i]) {
-            cout << aresta << " ";
-        }
-        cout << endl;
-    }
-*/
 
     cout << "Comprovant si D es PIDS..." << endl;
 
-    if (isPositiveInfluenceDominatingSet(G, D, visitat)) {
-        //if (esMPIDS(G, D)) 
-            cout << "El conjunt es d'influencia positiva" << endl;
-        //else cout << "El conjunt es d'influecia positiva pero no es minimal" << endl;
-    }
+    if (isPositiveInfluenceDominatingSet(G, D, visitat))
+        cout << "El conjunt es d'influencia positiva" << endl;
 
     else cout << "El conjunt no es d'influencia positiva" << endl;
 

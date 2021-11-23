@@ -20,7 +20,7 @@ local_search: local_search.cpp $(OBJS)
 	${CCC} ${CXXFLAGS} -o $@ $^
 
 basics: basics.cpp
-	${CCC} ${CFLAGS} -o $@ $^
+	${CCC} ${CXXFLAGS} -o $@ $^
 
 clean:
 	@rm -f *~ *.o ${TARGET} core
