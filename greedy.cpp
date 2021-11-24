@@ -136,17 +136,17 @@ void MergeSort(vector<set<int> >& v, int s, int e) {
     }
 }
 
-int computeH(const set<int> v, set<int>& S) {
+int computeH(const set<int>& v, set<int>& S) {
     int compt = 0;
 
-    for (int a : v) {
+    for (int a : v) {                               // per tot vei de a
 
         std::set<int>::iterator it = S.find(a);
-        if (it != S.end()) ++compt;
+        if (it != S.end()) ++compt;                 // Veins de v a S
 
     }
-     int n = v.size()/2; 
 
+    int n = ceil(float(v.size())/2);                // grau(v)/2
     return n-compt;
 
 }
@@ -154,6 +154,7 @@ int computeH(const set<int> v, set<int>& S) {
 int cover_degree(const vector<set<int> >& G, set<int>& S, set<int>& SC, int i) {
 
     int argMax = 0;
+    int aux = 0;
     int nCoverMax = -1;
 
     for (int a : G[i]) {
@@ -165,9 +166,12 @@ int cover_degree(const vector<set<int> >& G, set<int>& S, set<int>& SC, int i) {
         if (it != SC.end()) {
 
             for (int aresta : G[a]) {
-                if (computeH(G[aresta], S) > 0) ++covered;
+                if (computeH(G[aresta], S) > 0) {
+                    ++covered;
+                    aux = aresta;
+                }
             }
-            
+
             if (covered > nCoverMax) {
                 nCoverMax = covered;
                 argMax = a;
@@ -185,26 +189,28 @@ void greedy(const vector<set<int> >& G, set<int>& S) {
     int n = G.size();
     set<int> SC;
 
-    for (int i = 1; i <= n; ++i) {
+    for (int i = 0; i < n; ++i) {
         SC.insert(i);
     }
 
     for (int i = 0; i < n; ++i) {
 
-        int p = computeH(G[i], S);
+        int p = computeH(G[i], S);                  // mirem si el vertex i esta cobert
 
         if (p > 0) {
             
             for (int j = 0; j < p; ++j) {
 
-                int argmax = cover_degree(G, S, SC, i);
+                int argmax = cover_degree(G, S, SC, i);             // cover degree dels vertexs adjacents a i que estan en SC
                 S.insert(argmax);
                 SC.erase(argmax);
+
             }
 
         }
         
     }
+
 }
 
 /************
@@ -258,7 +264,24 @@ int main( int argc, char **argv ) {
     
 
     set<int> S;                 // S will contain the final solution
+/*
+    for (int i = 0; i < neighbors.size(); ++i) {
+        cout << "Vertex " << i;
+        for (int a : neighbors[i]) {
+            cout << " " << a;
+        }
+        cout << endl;
+    }
+*/
 
+    for (int i = 0; i < neighbors.size(); ++i) {
+        cout << "Vertex " << i;
+        for (int a : neighbors[i]) {
+            cout << " " << a;
+        }
+        cout << endl;
+    }
+    cout << endl;
     MergeSort(neighbors, 0, neighbors.size()-1);            // O(nlg(n))
     greedy(neighbors, S);
 
@@ -272,4 +295,3 @@ int main( int argc, char **argv ) {
     // cout << "value " << <value of your solution> << "\ttime " << ct << endl;
 
 }
-
