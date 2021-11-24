@@ -151,12 +151,33 @@ int computeH(const set<int> v, set<int>& S) {
 
 }
 
-int cover_deegree(const vector<set<int> >& G, const set<int>& veins, set<int>& S) {
-    int covered = 0;
-    for (int a : veins) {
-        if (computeH(G[a], S) > 0) ++covered;
+int cover_degree(const vector<set<int> >& G, set<int>& S, set<int>& SC, int i) {
+
+    int argMax = 0;
+    int nCoverMax = -1;
+
+    for (int a : G[i]) {
+
+        std::set<int>::iterator it = SC.find(a);
+
+        int covered = 0;
+
+        if (it != SC.end()) {
+
+            for (int aresta : G[a]) {
+                if (computeH(G[aresta], S) > 0) ++covered;
+            }
+            
+            if (covered > nCoverMax) {
+                nCoverMax = covered;
+                argMax = a;
+            }
+
+        }
+
     }
-    return covered;
+
+    return argMax;
 }
 
 void greedy(const vector<set<int> >& G, set<int>& S) {
@@ -176,24 +197,14 @@ void greedy(const vector<set<int> >& G, set<int>& S) {
             
             for (int j = 0; j < p; ++j) {
 
-                int nCoverMax = -1;
-
-                for (int a : G[i]) {
-
-                    int nCover = 0;
-                    std::set<int>::iterator it = SC.find(a);
-                    if (it != SC.end()) nCover = cover_deegree(G, G[a], S);
-                    if (nCover > nCoverMax) nCoverMax = nCover;
-                }
-
-                S.insert(nCoverMax);
-                SC.erase(nCoverMax);
+                int argmax = cover_degree(G, S, SC, i);
+                S.insert(argmax);
+                SC.erase(argmax);
             }
 
         }
         
     }
-    cout << S.size() << " " << SC.size() << endl;
 }
 
 /************
