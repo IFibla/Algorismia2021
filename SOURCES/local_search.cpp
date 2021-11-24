@@ -93,14 +93,28 @@ void read_parameters(int argc, char **argv) {
 }
 
 double getHeuristic(const set<int> &solution, const vector<set<int>> &neighbors) {
-    int N = solution.size();
     double heuristic = 0;
-    
-    return 1;
+    int n = solution.size();
+    for (int i = 0; i < n; ++i) {
+        int needed_neighbors = round(neighbors[i].size() / 2.0);
+        int counted_neighbors = 0;
+        for (set<int>::iterator it = neighbors[i].begin(); it != neighbors[i].end(); it++) {
+            if (solution.find(*it) != solution.end()) counted_neighbors++;
+        }
+        if ((counted_neighbors - needed_neighbors) == 0) {
+            for (int k : solution) {
+                heuristic += neighbors[k].size();
+            }
+        }else if ((counted_neighbors - needed_neighbors) > 0) {
+            heuristic -= counted_neighbors - needed_neighbors;
+        }
+        heuristic += (counted_neighbors - needed_neighbors) + 1;
+    }
+    return heuristic;
 }
 
 bool is_Solution(const set<int> &solution, const vector<set<int>> &neighbours) {
-    for (int i = 0; i < neighbors.size(); i++) { // For each vertex:
+    for (int i = 0; i < neighbors.size(); i++) {
         int needed_neighbors = round(neighbors[i].size() / 2.0);
         int counted_neighbors = 0;
         for (set<int>::iterator it = neighbors[i].begin(); it != neighbors[i].end(); it++) {
@@ -112,13 +126,12 @@ bool is_Solution(const set<int> &solution, const vector<set<int>> &neighbours) {
 }
 
 vector<set<int>> generateSuccessors(set<int> &actual, vector< set<int>>& neighbors) {
-   int n = actual.size();
    vector<set<int>> successors;
-   for (set<int>::iterator it = actual.begin(); it != actual.end(); ++it) {
+   for (int i = 0; i < neighbors.size(); i++) {
        set<int> aux = actual;
-       aux.erase(it);
-       if (is_Solution(aux, neighbors)) {
-           successors.push_back(aux);
+       if (actual.find(i) == actual.end()) {
+            aux.insert(i);
+            successors.push_back(aux);
        }
    }
    return successors;
@@ -191,24 +204,48 @@ int main( int argc, char **argv ) {
 
         // Solució inicial (tots els vertex)
 
-        set<int> ini_sol;
-
-        for (int i = 0; i < neighbors.size(); ++i) ini_sol.insert(i);
-
-        set<int> actual = ini_sol;
+        set<int> actual;
 
         bool end = false;
 
+        /*
+        cout << "First solution: " << endl;
+        for (int i : actual) cout << i << " ";
+        cout << endl;
+        */
+        
+       cout << actual.size() << endl;
+
         while (not end) {
+
+            // for (int i : actual) cout << i << " ";
             vector<set<int>> succesors = generateSuccessors(actual, neighbors);
-            if (succesors.size() != 0) {
-                actual = getBetterSon(succesors, neighbors);
-            } else {
-                end = true;
-            }
+            
+            /*
+            cout << "SUCCESSORS: " << endl;
+            for (set<int> successor : succesors) {
+                for (int s : successor) cout << s << " ";
+                cout << endl;
+            } 
+            */
+           
+            actual = getBetterSon(succesors, neighbors);
+
+            /*
+            cout << "New solution: " << endl;
+            for (int i : actual) cout << i << " ";
+            cout << endl;
+            */
+            
+            if (is_Solution(actual, neighbors)) end = true;
         }
 
+        cout << actual.size() << endl;
 
+        for (set<int>::iterator it = actual.begin(); it != actual.end(); ++it) { 
+            cout << *it << " ";
+        }
+        cout << endl;
         // HERE GOES YOUR LOCAL SEARCH METHOD
 
         // The starting solution for local search may be randomly generated, 
@@ -216,20 +253,6 @@ int main( int argc, char **argv ) {
         // the starting solution.
         
         // Empty initial solution
-        set<int> s;
-        vector<set<int>> solution = neighbors;
-        bool end = false;
-        while (not end) {
-            vector<vector<set<int>>> new_solutions;
-            new_solutions = generateSuccessors(solution, neighbors);
-            sort_and_delete(new_solutions);
-            vector<set<int>> new_solution = get_better_son(new_solutions, neighbors);
-            cout << "Heuristico de la solucion actual: " << getHeuristic(solution, neighbors) << ", Heuristico de la solucion nueva: " << getHeuristic(new_solution, neighbors) << endl;
-            if (getHeuristic(new_solution, neighbors) == getHeuristic(solution, neighbors) || new_solution == neighbors) end = true;
-            solution = new_solution;
-            cout << "Nueva solucion: " << endl;
-            print_solutions(solution);
-        }
         // Whenever you move to a new solution, first take the computation 
         // time as explained above. Say you store it in variable ct.
         // Then, write the following to the screen: 
@@ -276,4 +299,3 @@ int main( int argc, char **argv ) {
     cout << r_best << "\t" << r_mean << "\t" << rsd << "\t";
     cout << t_mean << "\t" << tsd << endl;
 }
-
