@@ -140,7 +140,6 @@ set<int> getBetterSon(vector<set<int>> successors, const vector<set<int>> &neigh
     return better_son;
 }
 
-
 /**********
 Main function
 **********/
@@ -216,6 +215,21 @@ int main( int argc, char **argv ) {
         // or you may incorporate your greedy heuristic in order to produce 
         // the starting solution.
         
+        // Empty initial solution
+        set<int> s;
+        vector<set<int>> solution = neighbors;
+        bool end = false;
+        while (not end) {
+            vector<vector<set<int>>> new_solutions;
+            new_solutions = generateSuccessors(solution, neighbors);
+            sort_and_delete(new_solutions);
+            vector<set<int>> new_solution = get_better_son(new_solutions, neighbors);
+            cout << "Heuristico de la solucion actual: " << getHeuristic(solution, neighbors) << ", Heuristico de la solucion nueva: " << getHeuristic(new_solution, neighbors) << endl;
+            if (getHeuristic(new_solution, neighbors) == getHeuristic(solution, neighbors) || new_solution == neighbors) end = true;
+            solution = new_solution;
+            cout << "Nueva solucion: " << endl;
+            print_solutions(solution);
+        }
         // Whenever you move to a new solution, first take the computation 
         // time as explained above. Say you store it in variable ct.
         // Then, write the following to the screen: 
