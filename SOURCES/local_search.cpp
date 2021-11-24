@@ -92,6 +92,63 @@ void read_parameters(int argc, char **argv) {
     }
 }
 
+// Funcion para imprimir una solucion
+void print_solutions(vector<set<int>> solution) {
+    for (int i = 0; i < solution.size(); i++) {
+        cout << "Vecinos del nodo " << i << ": " << endl;
+        for (int node : solution[i]) {
+            cout << "Nodo " << node << endl;
+        }
+    }
+}
+
+// Funcion generadora de sucesores
+vector< vector< set<int> > > generateSuccessors(const vector<set<int>> &solution, const vector<set<int>> &neighbors) {
+    vector<vector<set<int>>> new_solutions;
+    int N = neighbors.size();
+    for (int i = 0; i < N; i++) {
+        if (solution[i].size() != 0) { // Vertex in solution
+            new_solutions.push_back(solution);
+            new_solutions[new_solutions.size() - 1][i].clear();
+        }
+    }
+    return new_solutions;
+}
+
+
+
+void sort_and_delete(vector<vector<set<int>>> &new_solutions) {
+
+}
+
+double getHeuristic(const vector<set<int>> &solution, const vector<set<int>> &neighbors) {
+    int N = solution.size();
+    double heuristic = 0;
+    for (int i = 0; i < N; i++) {   // For each vertex:
+        if (solution[i].size() > 0) { // Vertex in solution
+            int j = 0;                // See how many of his neighbors are in the solution. From round(N / 2) do not add value to heuristic
+            for (set<int>::iterator it = solution[i].begin(); it != solution[i].end() && j < round(neighbors[i].size() / 2.0); it++) {
+                heuristic++;
+                j++;
+            }
+        }
+    }
+    return heuristic;
+}
+
+vector<set<int>> get_better_son(const vector<vector<set<int>>> &new_solutions, const vector<set<int>> &neighbors) {
+    vector<set<int>> better_son = new_solutions[0];
+    int better_heuristic = getHeuristic(better_son, neighbors);
+    int N = new_solutions.size();
+    for (int i = 1; i < N; i++) {
+        int new_heuristic = getHeuristic(new_solutions[i], neighbors);
+        if (new_heuristic > better_heuristic) {
+            better_son = new_solutions[i];
+            better_heuristic = new_heuristic;
+        }
+    }
+    return better_son;
+}
 
 /**********
 Main function
@@ -148,6 +205,21 @@ int main( int argc, char **argv ) {
         // or you may incorporate your greedy heuristic in order to produce 
         // the starting solution.
         
+        // Empty initial solution
+        set<int> s;
+        vector<set<int>> solution = neighbors;
+        bool end = false;
+        while (not end) {
+            vector<vector<set<int>>> new_solutions;
+            new_solutions = generateSuccessors(solution, neighbors);
+            sort_and_delete(new_solutions);
+            vector<set<int>> new_solution = get_better_son(new_solutions, neighbors);
+            cout << "Heuristico de la solucion actual: " << getHeuristic(solution, neighbors) << ", Heuristico de la solucion nueva: " << getHeuristic(new_solution, neighbors) << endl;
+            if (getHeuristic(new_solution, neighbors) == getHeuristic(solution, neighbors) || new_solution == neighbors) end = true;
+            solution = new_solution;
+            cout << "Nueva solucion: " << endl;
+            print_solutions(solution);
+        }
         // Whenever you move to a new solution, first take the computation 
         // time as explained above. Say you store it in variable ct.
         // Then, write the following to the screen: 
