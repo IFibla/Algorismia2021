@@ -98,7 +98,7 @@ double getHeuristic(const set<int> &solution, const vector<set<int>> &neighbors)
         if (solution.find(i) == solution.end()) // Not in solution
             heuristic += neighbors[i].size();
     }
-    return -heuristic;
+    return heuristic;
 }
 
 bool is_Solution(const set<int> &solution, const vector<set<int>> &neighbours) {
@@ -114,17 +114,12 @@ bool is_Solution(const set<int> &solution, const vector<set<int>> &neighbours) {
 }
 
 vector<set<int>> generateSuccessors(set<int> &actual, vector< set<int>>& neighbors) {
-   int n = actual.size();
    vector<set<int>> successors;
-   for (set<int>::iterator it = actual.begin(); it != actual.end(); ++it) {
+   for (int i = 0; i < neighbors.size(); i++) {
        set<int> aux = actual;
-       cout << "Generated solution erasing vertex " << *it << endl;
-       aux.erase(*it);
-       if (is_Solution(aux, neighbors)) {
-           cout << "Valid solution!" << endl;
-           successors.push_back(aux);
-       }
-       else cout << "Invalid solution" << endl;
+       //cout << "Generated solution adding vertex " << i << endl;
+       aux.insert(i);
+       successors.push_back(aux);
    }
    return successors;
 }
@@ -198,8 +193,6 @@ int main( int argc, char **argv ) {
 
         set<int> actual;
 
-        for (int i = 0; i < neighbors.size(); ++i) actual.insert(i);
-
         bool end = false;
 
         /*
@@ -212,16 +205,18 @@ int main( int argc, char **argv ) {
 
         while (not end) {
             vector<set<int>> succesors = generateSuccessors(actual, neighbors);
-            if (succesors.size() != 0) {
-                actual = getBetterSon(succesors, neighbors);
-            } else {
-                end = true;
-            }
-            /*
+            cout << "SUCCESSORS: " << endl;
+            for (set<int> successor : succesors) {
+                for (int s : successor) cout << s << " ";
+                cout << endl;
+            } 
+            actual = getBetterSon(succesors, neighbors);
+            if (is_Solution(actual, neighbors)) end = true;
+            
             cout << "New solution: " << endl;
             for (int i : actual) cout << i << " ";
             cout << endl;
-            */
+            
         }
 
         cout << actual.size() << endl;
