@@ -17,8 +17,8 @@
 #include <config.h>
 #endif
 
-#include "Timer.h"
-#include "Random.h"
+#include "../HEADERS/Timer.h"
+#include "../HEADERS/Random.h"
 #include <vector>
 #include <string>
 #include <stdio.h>
@@ -92,6 +92,54 @@ void read_parameters(int argc, char **argv) {
     }
 }
 
+double getHeuristic(const set<int> &solution, const vector<set<int>> &neighbors) {
+    int N = solution.size();
+    double heuristic = 0;
+    
+    return 1;
+}
+
+bool is_Solution(const set<int> &solution, const vector<set<int>> &neighbours) {
+    for (int i = 0; i < neighbors.size(); i++) { // For each vertex:
+        int needed_neighbors = round(neighbors[i].size() / 2.0);
+        int counted_neighbors = 0;
+        for (set<int>::iterator it = neighbors[i].begin(); it != neighbors[i].end(); it++) {
+            if (solution.find(*it) != solution.end()) counted_neighbors++;
+        }
+        if (counted_neighbors < needed_neighbors) return false;
+    }
+    return true;
+}
+
+vector<set<int>> generateSuccessors(set<int> &actual, vector< set<int>>& neighbors) {
+   int n = actual.size();
+   vector<set<int>> successors;
+   for (set<int>::iterator it = actual.begin(); it != actual.end(); ++it) {
+       set<int> aux = actual;
+       aux.erase(it);
+       if (is_Solution(aux, neighbors)) {
+           successors.push_back(aux);
+       }
+   }
+   return successors;
+}
+
+
+
+set<int> getBetterSon(vector<set<int>> successors, const vector<set<int>> &neighbours) {
+    set<int> better_son = successors[0];
+    int better_heuristic = getHeuristic(better_son, neighbors);
+    int N = successors.size();
+    for (int i = 1; i < N; i++) {
+        int new_heuristic = getHeuristic(successors[i], neighbors);
+        if (new_heuristic > better_heuristic) {
+            better_son = successors[i];
+            better_heuristic = new_heuristic;
+        }
+    }
+    return better_son;
+}
+
 
 /**********
 Main function
@@ -141,6 +189,26 @@ int main( int argc, char **argv ) {
         // double ct = timer.elapsed_time(Timer::VIRTUAL);
 
         cout << "start application " << na + 1 << endl;
+
+        // Solució inicial (tots els vertex)
+
+        set<int> ini_sol;
+
+        for (int i = 0; i < neighbors.size(); ++i) ini_sol.insert(i);
+
+        set<int> actual = ini_sol;
+
+        bool end = false;
+
+        while (not end) {
+            vector<set<int>> succesors = generateSuccessors(actual, neighbors);
+            if (succesors.size() != 0) {
+                actual = getBetterSon(succesors, neighbors);
+            } else {
+                end = true;
+            }
+        }
+
 
         // HERE GOES YOUR LOCAL SEARCH METHOD
 
