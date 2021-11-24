@@ -95,7 +95,7 @@ void read_parameters(int argc, char **argv) {
 double getHeuristic(const set<int> &solution, const vector<set<int>> &neighbors) {
     double heuristic = 0;
     for (int i = 0; i < neighbors.size(); i++) {
-        if (solution.find(i) == solution.end()) // Not in solution
+        if (solution.find(i) != solution.end()) // Not in solution
             heuristic += neighbors[i].size();
     }
     return heuristic;
@@ -204,19 +204,24 @@ int main( int argc, char **argv ) {
        cout << actual.size() << endl;
 
         while (not end) {
+
+            cout << "INITIAL SOLUTION: " << endl;
+            for (int i : actual) cout << i << " ";
+            cout << endl;
             vector<set<int>> succesors = generateSuccessors(actual, neighbors);
             cout << "SUCCESSORS: " << endl;
             for (set<int> successor : succesors) {
                 for (int s : successor) cout << s << " ";
                 cout << endl;
             } 
-            actual = getBetterSon(succesors, neighbors);
-            if (is_Solution(actual, neighbors)) end = true;
             
+            actual = getBetterSon(succesors, neighbors);
+
             cout << "New solution: " << endl;
             for (int i : actual) cout << i << " ";
             cout << endl;
             
+            if (is_Solution(actual, neighbors)) end = true;
         }
 
         cout << actual.size() << endl;
