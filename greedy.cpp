@@ -137,18 +137,15 @@ void MergeSort(vector<set<int> >& v, int s, int e) {
 }
 
 int computeH(const set<int>& v, set<int>& S) {
+
     int compt = 0;
-
-    for (int a : v) {                               // per tot vei de a
-
+    for (int a : v) {                                   // per tot vei de a
         std::set<int>::iterator it = S.find(a);
-        if (it != S.end()) ++compt;                 // Veins de v a S
-
+        if (it != S.end()) ++compt;                     // Veins de v a S
     }
 
-    int n = ceil(float(v.size())/2);                // grau(v)/2
+    int n = ceil(float(v.size())/2);                    // upper bound de grau(v)/2
     return n-compt;
-
 }
 
 int cover_degree(const vector<set<int> >& G, set<int>& S, set<int>& SC, int i) {
@@ -160,11 +157,8 @@ int cover_degree(const vector<set<int> >& G, set<int>& S, set<int>& SC, int i) {
     for (int a : G[i]) {
 
         std::set<int>::iterator it = SC.find(a);
-
         int covered = 0;
-
         if (it != SC.end()) {
-
             for (int aresta : G[a]) {
                 if (computeH(G[aresta], S) > 0) {
                     ++covered;
@@ -176,11 +170,8 @@ int cover_degree(const vector<set<int> >& G, set<int>& S, set<int>& SC, int i) {
                 nCoverMax = covered;
                 argMax = a;
             }
-
         }
-
     }
-
     return argMax;
 }
 
@@ -188,7 +179,6 @@ void greedy(const vector<set<int> >& G, set<int>& S) {
 
     int n = G.size();
     set<int> SC;
-
     for (int i = 0; i < n; ++i) {
         SC.insert(i);
     }
@@ -196,21 +186,15 @@ void greedy(const vector<set<int> >& G, set<int>& S) {
     for (int i = 0; i < n; ++i) {
 
         int p = computeH(G[i], S);                  // mirem si el vertex i esta cobert
-
         if (p > 0) {
-            
+        
             for (int j = 0; j < p; ++j) {
-
                 int argmax = cover_degree(G, S, SC, i);             // cover degree dels vertexs adjacents a i que estan en SC
                 S.insert(argmax);
                 SC.erase(argmax);
-
             }
-
         }
-        
     }
-
 }
 
 /************
@@ -256,42 +240,19 @@ int main( int argc, char **argv ) {
 
     // Example for requesting the elapsed computation time at any moment: 
     // double ct = timer.elapsed_time(Timer::VIRTUAL);
-
     // HERE GOES YOUR GREEDY HEURISTIC
     // When finished with generating a solution, first take the computation 
     // time as explained above. Say you store it in variable ct.
     // Then write the following to the screen: 
-    
+    // cout << "value " << <value of your solution> << "\ttime " << ct << endl;
 
     set<int> S;                 // S will contain the final solution
-/*
-    for (int i = 0; i < neighbors.size(); ++i) {
-        cout << "Vertex " << i;
-        for (int a : neighbors[i]) {
-            cout << " " << a;
-        }
-        cout << endl;
-    }
-*/
 
-    for (int i = 0; i < neighbors.size(); ++i) {
-        cout << "Vertex " << i;
-        for (int a : neighbors[i]) {
-            cout << " " << a;
-        }
-        cout << endl;
-    }
-    cout << endl;
-    MergeSort(neighbors, 0, neighbors.size()-1);            // O(nlg(n))
+    MergeSort(neighbors, 0, neighbors.size()-1);            // ordenem primer els vertexs respecte el seu grau de manera ascendent
     greedy(neighbors, S);
 
-    cout << "VERTEXS a D" << endl;
-    for (int i : S) {
-        cout << "Vertex " << i << endl;
-    }
+    double ct = timer.elapsed_time(Timer::VIRTUAL);
 
-
-
-    // cout << "value " << <value of your solution> << "\ttime " << ct << endl;
+    cout << "Nombre d'elements de la Solucio " << S.size() << "\ttime " << ct << endl;
 
 }
