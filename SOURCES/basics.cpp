@@ -14,23 +14,22 @@ bool isMinimalPositiveInfluenceDominatingSet(const Graf& G, const set<int>& D, v
     std::set<int>::iterator it = D.begin();
 
     while (it != D.end() and not esMPIDS) {                                         // per cada vertex u de D mirem que passa si el treiem
-
         set<int> Adjacents = G[*it];                                            // adjacencies del vertex u
 
         for (int aresta : Adjacents) {                                          // per tota adjacencia v de u
-
             int nAdjacenciesD = 0;
-
+            bool marcat = false;
             for (int a : G[aresta]) {                                           // mirem les adjacencies d'v tret el vertex u
 
                 std::set<int>::iterator i = D.find(a);
                 if (i != D.end() and *i != *it) ++nAdjacenciesD;
-
+                else if (i != D.end() and *i == *it and G[aresta].size() == 1) marcat = true;
             }
 
-            int nAdjacenciesTotals = G[aresta].size() -1;
+            int nAdjacenciesTotals = G[aresta].size() - 1;
 
-            float proporcioAdjaD = float(nAdjacenciesD)/float(nAdjacenciesTotals);
+            float proporcioAdjaD = 0.0;
+            if (not marcat) proporcioAdjaD = float(nAdjacenciesD)/float(nAdjacenciesTotals);
             if (proporcioAdjaD < 0.5) esMPIDS = true;
 
         }
@@ -53,7 +52,6 @@ bool isPositiveInfluenceDominatingSet(const Graf& G, const set<int>& D, vector<b
                                                     // visitats fins ara tinguin com a minim la meitat de les adjacencies a D
         int v = S.top();
         S.pop();
-
         int nAdjacenciesD = 0;
 
         if (not visitat[v]) {
@@ -65,11 +63,9 @@ bool isPositiveInfluenceDominatingSet(const Graf& G, const set<int>& D, vector<b
                 std::set<int>::iterator it = D.find(aresta);
                 if (it != D.end()) ++nAdjacenciesD;
                 S.push(aresta);
-
+                
             }
-
             int nAdjacenciesTotals = G[v].size();
-
             float proporcioAdjaD = float(nAdjacenciesD)/float(nAdjacenciesTotals);
             if (proporcioAdjaD < 0.5) esPIDS = false;
 

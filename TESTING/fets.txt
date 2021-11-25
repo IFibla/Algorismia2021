@@ -1,0 +1,9 @@
+ego-facebook        NO OK
+graph_actors_dat    NO OK
+graph_CA-AstroPh    NO OK
+graph_CA-HepPh      ok pero no minimal
+graph_football      ok pero no minimal
+graph_jazz          NO OK
+soc-gplus
+socfb-Brandeis99
+socfb-Mich67
