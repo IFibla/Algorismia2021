@@ -232,16 +232,25 @@ void swap(set<int>& aux,int i, int j) {
     aux.insert(j);
 }
 
-vector<set<int>> generateSuccessors(set<int> &actual, vector< set<int>>& neighbors, set<int>::iterator& last) {
-   vector<set<int>> successors;
-    for (set<int>::iterator it = last; it != actual.end(); ++it) {
+bool eliminateVertex(set<int> &actual, vector< set<int>>& neighbors, set<int>& newsol) {
+    vector<set<int>> successors;
+    for (set<int>::iterator it = actual.begin(); it != actual.end(); ++it) {
        set<int> aux = actual;
        aux.erase(*it);
        if (is_Solution(aux, neighbors)) {
-           successors.push_back(aux);
-           cout << "erase";
+           newsol = aux;
+           return true;
        }
     }
+    return false;
+}
+
+bool nextSwap(set<int> &actual, vector< set<int>>& neighbors, set<int>& newsol) {
+
+    double heurActual = getHeuristic(actual, neighbors);
+    double heurNewSol;
+    pair<int, int> bestSwap;
+    bool primer = true;
     int n = neighbors.size();
     for (set<int>::iterator it = actual.begin(); it != actual.end(); ++it) {
         for (int i = 0; i < n; ++i) {
@@ -249,18 +258,37 @@ vector<set<int>> generateSuccessors(set<int> &actual, vector< set<int>>& neighbo
             if (actual.find(i) == actual.end()) {
                 swap(aux, *it,  i);
                 if (is_Solution(aux, neighbors)) {
-                    successors.push_back(aux);
-                    cout << "swap";
+                    if (primer) {
+                        primer = false;
+                        bestSwap.first = *it;
+                        bestSwap.second = i;
+                        heurNewSol = getHeuristic(aux, neighbors);
+                    } else {
+                        double heurAux = getHeuristic(aux, neighbors);
+                        if ( heurAux > heurNewSol) {
+                            bestSwap.first = *it;
+                            bestSwap.second = i;
+                            heurNewSol = heurAux;
+                        }
+                    }
                 }
             }
         }
     }
-   return successors;
+
+    if (heurNewSol > heurActual) {
+        swap(actual, bestSwap.first, bestSwap.second);
+        newsol = actual;
+        return true;
+    }else {
+        return false;
+    }
+    
 }
 
 
 
-set<int> getBetterSon(vector<set<int>> successors, const vector<set<int>> &neighbours, set<int>::iterator& last, set<int>& actual) {
+set<int> getBetterSon(vector<set<int>> successors, const vector<set<int>> &neighbours) {
     set<int> better_son = successors[0];
     int better_heuristic = getHeuristic(better_son, neighbors);
     int N = successors.size();
@@ -271,18 +299,6 @@ set<int> getBetterSon(vector<set<int>> successors, const vector<set<int>> &neigh
             better_heuristic = new_heuristic;
         }
     }
-    set<int>::iterator it = actual.begin();
-    set<int>::iterator it2 = better_son.begin();
-    bool end = false;
-    while ( !end && it != last) {
-        if ( *it2 != *it ) {
-            last = better_son.begin();
-            end = true;
-        }
-        ++it;
-        ++it2;
-    }
-
     return better_son;
 }
 
@@ -297,7 +313,7 @@ int main( int argc, char **argv ) {
     // setting the output format for doubles to 2 decimals after the comma
     std::cout << std::setprecision(2) << std::fixed;
 
-    // initializing the random number generator. 
+    // initializing the random number generator.
     // A random number in (0,1) is obtained with: double rnum = rnd->next();
     rnd = new Random((unsigned) time(&t));
     rnd->next();
@@ -361,36 +377,23 @@ int main( int argc, char **argv ) {
         for (int i : actual) cout << i << " ";
         cout << endl;
         */
-
-       set<int>::iterator last = actual.begin();
         
        cout << actual.size() << endl;
 
+       set<int> solaux;
+
         while (not end) {
 
-            for (int i : actual) cout << i << " ";
-            vector<set<int>> successors = generateSuccessors(actual, neighbors, last);
-            
-            /*
-            cout << "SUCCESSORS: " << endl;
-            for (set<int> succesor : successors) {
-                for (int s : succesor) cout << s << " ";
-                cout << endl;
-            }
-            */
-
-            if (successors.size() == 0) end = true;
-            else  {
-                actual = getBetterSon(successors, neighbors, last, actual);
-                cout << "New solution: " << actual.size() << endl;
-                for (set<int>::iterator it = actual.begin(); it != actual.end(); ++it) { 
-                    cout << *it << " ";
+            if (eliminateVertex(actual, neighbors, solaux)) {
+                actual = solaux;
+            } else {
+                if (nextSwap(actual, neighbors, solaux)) {
+                    actual = solaux;
+                } else {
+                    end = true;
                 }
-                cout << endl;
-                if (end) cout << "estic a true";
-                else cout << "estic a false";
             }
-            
+            cout << actual.size() << endl;
         }
 
         cout << actual.size() << endl;
