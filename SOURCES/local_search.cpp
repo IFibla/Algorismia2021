@@ -232,13 +232,14 @@ void swap(set<int>& aux,int i, int j) {
     aux.insert(j);
 }
 
-bool eliminateVertex(set<int> &actual, vector< set<int>>& neighbors, set<int>& newsol) {
+bool eliminateVertex(set<int> &actual, vector< set<int>>& neighbors, set<int>& newsol, set<int>::iterator& last) {
     vector<set<int>> successors;
-    for (set<int>::iterator it = actual.begin(); it != actual.end(); ++it) {
+    for (set<int>::iterator it = last; it != actual.end(); ++it) {
        set<int> aux = actual;
        aux.erase(*it);
        if (is_Solution(aux, neighbors)) {
            newsol = aux;
+           last = it;
            return true;
        }
     }
@@ -377,6 +378,8 @@ int main( int argc, char **argv ) {
         for (int i : actual) cout << i << " ";
         cout << endl;
         */
+
+       set<int>::iterator last = actual.begin();
         
        cout << actual.size() << endl;
 
@@ -384,7 +387,7 @@ int main( int argc, char **argv ) {
 
         while (not end) {
 
-            if (eliminateVertex(actual, neighbors, solaux)) {
+            if (eliminateVertex(actual, neighbors, solaux, last)) {
                 actual = solaux;
             } else {
                 if (nextSwap(actual, neighbors, solaux)) {
@@ -392,6 +395,7 @@ int main( int argc, char **argv ) {
                 } else {
                     end = true;
                 }
+                last = actual.begin();
             }
             cout << actual.size() << endl;
         }
