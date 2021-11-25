@@ -205,21 +205,12 @@ void greedy(const vector<set<int> >& G, set<int>& S) {
 
 double getHeuristic(const set<int> &solution, const vector<set<int>> &neighbors) {
     double heuristic = 0;
-    int n = solution.size();
-    for (int i = 0; i < n; ++i) {
-        int needed_neighbors = round(neighbors[i].size() / 2.0);
-        int counted_neighbors = 0;
-        for (set<int>::iterator it = neighbors[i].begin(); it != neighbors[i].end(); it++) {
-            if (solution.find(*it) != solution.end()) counted_neighbors++;
-        }
-        if ((counted_neighbors - needed_neighbors) == 0) {
-            for (int k : solution) {
-                heuristic += neighbors[k].size();
+    for(int i = 0; i < neighbors.size(); ++i) {
+        if (solution.find(i) == solution.end()) {
+             for (set<int>::iterator it = neighbors[i].begin(); it != neighbors[i].end(); ++it) {
+                if (solution.find(*it) == solution.end()) heuristic += 1;
             }
-        }else if ((counted_neighbors - needed_neighbors) > 0) {
-            heuristic -= counted_neighbors - needed_neighbors;
         }
-        heuristic += (counted_neighbors - needed_neighbors) + 1;
     }
     return heuristic;
 }
@@ -236,21 +227,40 @@ bool is_Solution(const set<int> &solution, const vector<set<int>> &neighbours) {
     return true;
 }
 
-vector<set<int>> generateSuccessors(set<int> &actual, vector< set<int>>& neighbors) {
+void swap(set<int>& aux,int i, int j) {
+    aux.erase(i);
+    aux.insert(j);
+}
+
+vector<set<int>> generateSuccessors(set<int> &actual, vector< set<int>>& neighbors, set<int>::iterator& last) {
    vector<set<int>> successors;
-   for (int i = 0; i < neighbors.size(); i++) {
+    for (set<int>::iterator it = last; it != actual.end(); ++it) {
        set<int> aux = actual;
-       if (actual.find(i) == actual.end()) {
-            aux.insert(i);
-            successors.push_back(aux);
+       aux.erase(*it);
+       if (is_Solution(aux, neighbors)) {
+           successors.push_back(aux);
+           cout << "erase";
        }
-   }
+    }
+    int n = neighbors.size();
+    for (set<int>::iterator it = actual.begin(); it != actual.end(); ++it) {
+        for (int i = 0; i < n; ++i) {
+            set<int> aux = actual;
+            if (actual.find(i) == actual.end()) {
+                swap(aux, *it,  i);
+                if (is_Solution(aux, neighbors)) {
+                    successors.push_back(aux);
+                    cout << "swap";
+                }
+            }
+        }
+    }
    return successors;
 }
 
 
 
-set<int> getBetterSon(vector<set<int>> successors, const vector<set<int>> &neighbours) {
+set<int> getBetterSon(vector<set<int>> successors, const vector<set<int>> &neighbours, set<int>::iterator& last, set<int>& actual) {
     set<int> better_son = successors[0];
     int better_heuristic = getHeuristic(better_son, neighbors);
     int N = successors.size();
@@ -261,6 +271,18 @@ set<int> getBetterSon(vector<set<int>> successors, const vector<set<int>> &neigh
             better_heuristic = new_heuristic;
         }
     }
+    set<int>::iterator it = actual.begin();
+    set<int>::iterator it2 = better_son.begin();
+    bool end = false;
+    while ( !end && it != last) {
+        if ( *it2 != *it ) {
+            last = better_son.begin();
+            end = true;
+        }
+        ++it;
+        ++it2;
+    }
+
     return better_son;
 }
 
@@ -313,6 +335,16 @@ int main( int argc, char **argv ) {
 
         cout << "start application " << na + 1 << endl;
 
+        /*
+        for(int i = 0; i < neighbors.size(); ++i) {
+            cout << "Vertex :" << i << "  Venis: ";
+            for (set<int>::iterator it = neighbors[i].begin(); it != neighbors[i].end(); ++it) {
+                cout << *it << " ";
+            }
+            cout << endl;
+        }
+        */
+
         // Solució inicial (tots els vertex)
 
         set<int> S;                 // S will contain the final solution
@@ -329,39 +361,46 @@ int main( int argc, char **argv ) {
         for (int i : actual) cout << i << " ";
         cout << endl;
         */
+
+       set<int>::iterator last = actual.begin();
         
        cout << actual.size() << endl;
 
         while (not end) {
 
-            // for (int i : actual) cout << i << " ";
-            vector<set<int>> succesors = generateSuccessors(actual, neighbors);
+            for (int i : actual) cout << i << " ";
+            vector<set<int>> successors = generateSuccessors(actual, neighbors, last);
             
             /*
             cout << "SUCCESSORS: " << endl;
-            for (set<int> successor : succesors) {
-                for (int s : successor) cout << s << " ";
+            for (set<int> succesor : successors) {
+                for (int s : succesor) cout << s << " ";
                 cout << endl;
-            } 
+            }
             */
-           
-            actual = getBetterSon(succesors, neighbors);
 
-            /*
-            cout << "New solution: " << endl;
-            for (int i : actual) cout << i << " ";
-            cout << endl;
-            */
+            if (successors.size() == 0) end = true;
+            else  {
+                actual = getBetterSon(successors, neighbors, last, actual);
+                cout << "New solution: " << actual.size() << endl;
+                for (set<int>::iterator it = actual.begin(); it != actual.end(); ++it) { 
+                    cout << *it << " ";
+                }
+                cout << endl;
+                if (end) cout << "estic a true";
+                else cout << "estic a false";
+            }
             
-            if (is_Solution(actual, neighbors)) end = true;
         }
 
         cout << actual.size() << endl;
 
+        /*
         for (set<int>::iterator it = actual.begin(); it != actual.end(); ++it) { 
             cout << *it << " ";
         }
         cout << endl;
+        */
         // HERE GOES YOUR LOCAL SEARCH METHOD
 
         // The starting solution for local search may be randomly generated, 
