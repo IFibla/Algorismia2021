@@ -92,6 +92,117 @@ void read_parameters(int argc, char **argv) {
     }
 }
 
+void MergeSortedIntervals(vector<set<int> >& v, int s, int m, int e) {
+
+    // temp is used to temporary store the vector obtained by merging
+    // elements from [s to m] and [m+1 to e] in v
+    vector<set<int> > temp;
+
+    int i, j;
+    i = s;
+    j = m + 1;
+
+    while (i <= m && j <= e) {
+
+        if (v[i].size() <= v[j].size()) {
+            temp.push_back(v[i]);
+            ++i;
+        }
+        else {
+            temp.push_back(v[j]);
+            ++j;
+        }
+
+    }
+
+    while (i <= m) {
+        temp.push_back(v[i]);
+        ++i;
+    }
+
+    while (j <= e) {
+        temp.push_back(v[j]);
+        ++j;
+    }
+
+    for (int i = s; i <= e; ++i)
+        v[i] = temp[i - s];
+
+}
+
+// the MergeSort function
+// Sorts the array in the range [s to e] in v using
+// merge sort algorithm
+void MergeSort(vector<set<int> >& v, int s, int e) {
+    if (s < e) {
+        int m = (s + e) / 2;
+        MergeSort(v, s, m);
+        MergeSort(v, m + 1, e);
+        MergeSortedIntervals(v, s, m, e);
+    }
+}
+
+int computeH(const set<int>& v, set<int>& S) {
+
+    int compt = 0;
+    for (int a : v) {                                   // per tot vei de a
+        std::set<int>::iterator it = S.find(a);
+        if (it != S.end()) ++compt;                     // Veins de v a S
+    }
+
+    int n = ceil(float(v.size())/2);                    // upper bound de grau(v)/2
+    return n-compt;
+}
+
+int cover_degree(const vector<set<int> >& G, set<int>& S, set<int>& SC, int i) {
+
+    int argMax = 0;
+    int aux = 0;
+    int nCoverMax = -1;
+
+    for (int a : G[i]) {
+
+        std::set<int>::iterator it = SC.find(a);
+        int covered = 0;
+        if (it != SC.end()) {
+            for (int aresta : G[a]) {
+                if (computeH(G[aresta], S) > 0) {
+                    ++covered;
+                    aux = aresta;
+                }
+            }
+
+            if (covered > nCoverMax) {
+                nCoverMax = covered;
+                argMax = a;
+            }
+        }
+    }
+    return argMax;
+}
+
+void greedy(const vector<set<int> >& G, set<int>& S) {
+
+    int n = G.size();
+    set<int> SC;
+    for (int i = 0; i < n; ++i) {
+        SC.insert(i);
+    }
+
+    for (int i = 0; i < n; ++i) {
+
+        int p = computeH(G[i], S);                  // mirem si el vertex i esta cobert
+        if (p > 0) {
+        
+            for (int j = 0; j < p; ++j) {
+                int argmax = cover_degree(G, S, SC, i);             // cover degree dels vertexs adjacents a i que estan en SC
+                S.insert(argmax);
+                SC.erase(argmax);
+            }
+        }
+    }
+}
+
 double getHeuristic(const set<int> &solution, const vector<set<int>> &neighbors) {
     double heuristic = 0;
     int n = solution.size();
@@ -204,7 +315,12 @@ int main( int argc, char **argv ) {
 
         // Solució inicial (tots els vertex)
 
-        set<int> actual;
+        set<int> S;                 // S will contain the final solution
+
+        MergeSort(neighbors, 0, neighbors.size()-1);            // ordenem primer els vertexs respecte el seu grau de manera ascendent
+        greedy(neighbors, S);
+
+        set<int> actual = S;
 
         bool end = false;
 
