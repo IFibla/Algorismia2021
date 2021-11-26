@@ -203,16 +203,15 @@ void greedy(const vector<set<int> >& G, set<int>& S) {
     }
 }
 
-double getHeuristic(const set<int> &solution, const vector<set<int>> &neighbors) {
-    double heuristic = 0;
-    for(int i = 0; i < neighbors.size(); ++i) {
-        if (solution.find(i) == solution.end()) {
-             for (set<int>::iterator it = neighbors[i].begin(); it != neighbors[i].end(); ++it) {
-                if (solution.find(*it) == solution.end()) heuristic += 1;
-            }
-        }
+double getHeuristic(const set<int> &solution, const vector<set<int>> &neighbors, int& weight, int s, int e) {
+    int aux = weight;
+    for(set<int>::iterator it = neighbors[s].begin(); it != neighbors[s].end(); ++it) {
+        if (solution.find(*it) == solution.end()) aux += 1;
     }
-    return heuristic;
+    for(set<int>::iterator it = neighbors[e].begin(); it != neighbors[e].end(); ++it) {
+        if (solution.find(*it) == solution.end()) aux -= 1;
+    }
+    return aux;
 }
 
 bool is_Solution(const set<int> &solution, const vector<set<int>> &neighbours, const int &j) {
@@ -240,7 +239,7 @@ void swap(set<int>& aux,int i, int j) {
     aux.insert(j);
 }
 
-bool eliminateVertex(set<int> &actual, vector< set<int>>& neighbors, set<int>& newsol, set<int>::iterator& last, set<int>& not_sol) {
+bool eliminateVertex(set<int> &actual, vector< set<int>>& neighbors, set<int>& newsol, set<int>::iterator& last, set<int>& not_sol, int& weight) {
     vector<set<int>> successors;
     for (set<int>::iterator it = last; it != actual.end(); ++it) {
        set<int> aux = actual;
@@ -249,15 +248,19 @@ bool eliminateVertex(set<int> &actual, vector< set<int>>& neighbors, set<int>& n
            newsol = aux;
            last = it;
            not_sol.insert(*it);
+            for(set<int>::iterator it2 = neighbors[*it].begin(); it2 != neighbors[*it].end(); ++it2) {
+                if (actual.find(*it2) == actual.end()) weight -= 1;
+            }
+            cout << *it << endl;
            return true;
        }
     }
     return false;
 }
 
-bool nextSwap(set<int> &actual, vector< set<int>>& neighbors, set<int>& newsol, set<int>& not_sol) {
+bool nextSwap(set<int> &actual, vector< set<int>>& neighbors, set<int>& newsol, set<int>& not_sol, int& weight) {
 
-    double heurActual = getHeuristic(actual, neighbors);
+    double heurActual = weight;
     double heurNewSol;
     pair<int, int> bestSwap;
     bool primer = true;
@@ -266,20 +269,21 @@ bool nextSwap(set<int> &actual, vector< set<int>>& neighbors, set<int>& newsol, 
         for (set<int>::iterator it2 = not_sol.begin(); it2 != not_sol.end(); ++it2) {
             set<int> aux = actual;
             if (actual.find(*it2) == actual.end()) {
-                cout << "Swapping vertex " << *it << " for vertex " << *it2 << endl;
                 swap(aux, *it,  *it2);
                 if (is_Solution(aux, neighbors, *it )) {
+                    cout << "Swapping vertex " << *it << " for vertex " << *it2 << endl;
                     if (primer) {
                         primer = false;
                         bestSwap.first = *it;
                         bestSwap.second = *it2;
-                        heurNewSol = getHeuristic(aux, neighbors);
+                        heurNewSol = getHeuristic(aux, neighbors, weight, *it, *it2);
                     } else {
-                        double heurAux = getHeuristic(aux, neighbors);
+                        double heurAux = getHeuristic(aux, neighbors, weight, *it, *it2);
                         if ( heurAux > heurNewSol) {
                             bestSwap.first = *it;
                             bestSwap.second = *it2;
                             heurNewSol = heurAux;
+                            cout << *it << " " << *it2 << endl;
                         }
                     }
                 }
@@ -292,6 +296,13 @@ bool nextSwap(set<int> &actual, vector< set<int>>& neighbors, set<int>& newsol, 
         not_sol.insert(bestSwap.first);
         not_sol.erase(bestSwap.second);
         newsol = actual;
+        for(set<int>::iterator it = neighbors[bestSwap.first].begin(); it != neighbors[bestSwap.first].end(); ++it) {
+            if (actual.find(*it) == actual.end()) weight += 1;
+        }
+        for(set<int>::iterator it = neighbors[bestSwap.second].begin(); it != neighbors[bestSwap.second].end(); ++it) {
+            if (actual.find(*it) == actual.end()) weight -= 1;
+        }
+        cout << weight <<endl;
         return true;
     }else {
         return false;
@@ -358,7 +369,7 @@ int main( int argc, char **argv ) {
             greedy(neighbors, S);
             */
 
-           for (int i = 0; i < neighbors.size(); i++) S.insert(i);  // Solucio inicial plena
+            for (int i = 0; i < neighbors.size(); i++) S.insert(i);  // Solucio inicial plena
 
             set<int> actual = S;
 
@@ -373,6 +384,15 @@ int main( int argc, char **argv ) {
                 cout << endl;
             }
             */
+           int weight = 0;
+
+           for(int i = 0; i < neighbors.size(); ++i) {
+                if (actual.find(i) == actual.end()) {
+                    for (set<int>::iterator it = neighbors[i].begin(); it != neighbors[i].end(); ++it) {
+                        if (actual.find(*it) == actual.end()) weight += 1;
+                    }
+                }
+            }
 
         set<int>::iterator last = actual.begin();
             
@@ -386,15 +406,14 @@ int main( int argc, char **argv ) {
         }
 
 
-
         while (not end) {
             
-            if (eliminateVertex(actual, initial_neighbors, solaux, last, not_sol)) {
+            if (eliminateVertex(actual, initial_neighbors, solaux, last, not_sol, weight)) {
                 cout << "Escollit erase" << endl;
                 actual = solaux;
             } else {
                 //cout << "Starting swap" << endl;
-                if (nextSwap(actual, initial_neighbors, solaux, not_sol)) {
+                if (nextSwap(actual, initial_neighbors, solaux, not_sol, weight)) {
                     cout << "Escollit swap" << endl;
                     actual = solaux;
                 } else {
