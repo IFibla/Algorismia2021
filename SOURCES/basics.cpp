@@ -23,13 +23,12 @@ bool isMinimalPositiveInfluenceDominatingSet(const Graf& G, const set<int>& D, v
 
                 std::set<int>::iterator i = D.find(a);
                 if (i != D.end() and *i != *it) ++nAdjacenciesD;
-                else if (i != D.end() and *i == *it and G[aresta].size() == 1) marcat = true;
+                //else if (i != D.end() and *i == *it and G[aresta].size() == 1) marcat = true;
             }
 
             int nAdjacenciesTotals = G[aresta].size() - 1;
 
-            float proporcioAdjaD = 0.0;
-            if (not marcat) proporcioAdjaD = float(nAdjacenciesD)/float(nAdjacenciesTotals);
+            float proporcioAdjaD = proporcioAdjaD = float(nAdjacenciesD)/float(nAdjacenciesTotals);
             if (proporcioAdjaD < 0.5) esMPIDS = true;
 
         }
@@ -60,7 +59,7 @@ bool isPositiveInfluenceDominatingSet(const Graf& G, const set<int>& D, vector<b
 
             for (int aresta : G[v]) {
 
-                std::set<int>::iterator it = D.find(aresta);
+                std::set<int>::const_iterator it = D.find(aresta);
                 if (it != D.end()) ++nAdjacenciesD;
                 S.push(aresta);
                 
@@ -68,7 +67,6 @@ bool isPositiveInfluenceDominatingSet(const Graf& G, const set<int>& D, vector<b
             int nAdjacenciesTotals = G[v].size();
             float proporcioAdjaD = float(nAdjacenciesD)/float(nAdjacenciesTotals);
             if (proporcioAdjaD < 0.5) esPIDS = false;
-
         }
     }
     return esPIDS;
@@ -86,10 +84,10 @@ int main() {
     cout << "Introdueix m arestes de la forma v u on v,u son vertexs de V" << endl;
 
     int v, u;
-    while (m--) {
+    for (int i = 0; i < m; ++i) {
         cin >> v >> u;
-        G[v].insert(u);
-        G[u].insert(v);
+        G[v-1].insert(u-1);
+        G[u-1].insert(v-1);
     }
 
     cout << "Introdueix el nombre de vertexs del conjunt D i seguidament els vertexs que hi pertanyen" << endl;
@@ -97,10 +95,12 @@ int main() {
     int nD;
     cin >> nD;
     set<int> D;
+
+    int w;
     
-    while (nD--) {
-        cin >> v;
-        D.insert(v);
+    for (int i = 0; i < nD; ++i) {
+        cin >> w;
+        D.insert(w);
     }
 
     vector<bool> visitat(n, false);
@@ -121,6 +121,9 @@ int main() {
         else cout << "El conjunt es d'influencia positiva pero no es minimal" << endl;
             
     }
-    else cout << "El conjunt no es d'influencia positiva" << endl;
-
+    else {
+        cout << "El conjunt no es d'influencia positiva" << endl;
+        cout << D.size() << endl;
+        for (int a : D) cout << a << endl;
+    }
 }

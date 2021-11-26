@@ -247,20 +247,13 @@ int main( int argc, char **argv ) {
     // cout << "value " << <value of your solution> << "\ttime " << ct << endl;
 
     set<int> S;                 // S will contain the final solution
-
-    cout << n_of_nodes << " " << n_of_arcs << endl;
-    for (int i = 0; i < neighbors.size(); ++i) {
-        for (int a : neighbors[i]) cout << i << " " << a << endl;
-    }
+    vector<set<int> > Gcopia = neighbors;
 
     MergeSort(neighbors, 0, neighbors.size()-1);            // ordenem primer els vertexs respecte el seu grau de manera ascendent
     greedy(neighbors, S);
 
-    cout << S.size() << endl;
-    for (int a : S) cout << a << endl;
+    double ct = timer.elapsed_time(Timer::VIRTUAL);
 
-    //double ct = timer.elapsed_time(Timer::VIRTUAL);
-
-    //cout << "Nombre d'elements de la Solucio " << S.size() << "\ttime " << ct << endl;
+    cout << "Nombre d'elements de la Solucio " << S.size() << "\ttime " << ct << endl;
 
 }
