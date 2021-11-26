@@ -92,8 +92,8 @@ int main() {
     int v, u;
     while (m--) {
         cin >> v >> u;
-        G[v].insert(u);
-        G[u].insert(v);
+        G[v - 1].insert(u - 1);
+        G[u - 1].insert(v - 1);
     }
 
     cout << "Introdueix el nombre de vertexs del conjunt D i seguidament els vertexs que hi pertanyen" << endl;
