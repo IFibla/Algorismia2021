@@ -240,7 +240,7 @@ void swap(set<int>& aux,int i, int j) {
     aux.insert(j);
 }
 
-bool eliminateVertex(set<int> &actual, vector< set<int>>& neighbors, set<int>& newsol, set<int>::iterator& last) {
+bool eliminateVertex(set<int> &actual, vector< set<int>>& neighbors, set<int>& newsol, set<int>::iterator& last, set<int>& not_sol) {
     vector<set<int>> successors;
     for (set<int>::iterator it = last; it != actual.end(); ++it) {
        set<int> aux = actual;
@@ -248,13 +248,14 @@ bool eliminateVertex(set<int> &actual, vector< set<int>>& neighbors, set<int>& n
        if (is_Solution(aux, neighbors, *it )) {
            newsol = aux;
            last = it;
+           not_sol.insert(*it);
            return true;
        }
     }
     return false;
 }
 
-bool nextSwap(set<int> &actual, vector< set<int>>& neighbors, set<int>& newsol) {
+bool nextSwap(set<int> &actual, vector< set<int>>& neighbors, set<int>& newsol, set<int>& not_sol) {
 
     double heurActual = getHeuristic(actual, neighbors);
     double heurNewSol;
@@ -262,22 +263,22 @@ bool nextSwap(set<int> &actual, vector< set<int>>& neighbors, set<int>& newsol) 
     bool primer = true;
     int n = neighbors.size();
     for (set<int>::iterator it = actual.begin(); it != actual.end(); ++it) {
-        for (int i = 0; i < n; ++i) {
+        for (set<int>::iterator it2 = not_sol.begin(); it2 != not_sol.end(); ++it2) {
             set<int> aux = actual;
-            if (actual.find(i) == actual.end()) {
-                cout << "Swapping vertex " << *it << " for vertex " << i << endl;
-                swap(aux, *it,  i);
+            if (actual.find(*it2) == actual.end()) {
+                cout << "Swapping vertex " << *it << " for vertex " << *it2 << endl;
+                swap(aux, *it,  *it2);
                 if (is_Solution(aux, neighbors, *it )) {
                     if (primer) {
                         primer = false;
                         bestSwap.first = *it;
-                        bestSwap.second = i;
+                        bestSwap.second = *it2;
                         heurNewSol = getHeuristic(aux, neighbors);
                     } else {
                         double heurAux = getHeuristic(aux, neighbors);
                         if ( heurAux > heurNewSol) {
                             bestSwap.first = *it;
-                            bestSwap.second = i;
+                            bestSwap.second = *it2;
                             heurNewSol = heurAux;
                         }
                     }
@@ -288,6 +289,8 @@ bool nextSwap(set<int> &actual, vector< set<int>>& neighbors, set<int>& newsol) 
 
     if (heurNewSol > heurActual) {
         swap(actual, bestSwap.first, bestSwap.second);
+        not_sol.insert(bestSwap.first);
+        not_sol.erase(bestSwap.second);
         newsol = actual;
         return true;
     }else {
@@ -302,85 +305,97 @@ Main function
 
 int main( int argc, char **argv ) {
 
-    read_parameters(argc,argv);
-    
-    // setting the output format for doubles to 2 decimals after the comma
-    std::cout << std::setprecision(2) << std::fixed;
-
-    // initializing the random number generator.
-    // A random number in (0,1) is obtained with: double rnum = rnd->next();
-    rnd = new Random((unsigned) time(&t));
-    rnd->next();
-
-    // vectors for storing the result and the computation time 
-    // obtained by the <n_apps> applications of local search
-    vector<double> results(n_apps, std::numeric_limits<int>::max());
-    vector<double> times(n_apps, 0.0);
-
-    // opening the corresponding input file and reading the problem data
-    ifstream indata;
-    indata.open(inputFile.c_str());
-    if(not indata) { // file couldn't be opened
-        cout << "Error: file could not be opened" << endl;
-    }
-
-    indata >> n_of_nodes;
-    indata >> n_of_arcs;
-    neighbors = vector< set<int> >(n_of_nodes);
-    int u, v;
-    while(indata >> u >> v) {
-        neighbors[u - 1].insert(v - 1);
-        neighbors[v - 1].insert(u - 1);
-    }
-    indata.close();
-
-    // main loop over all applications of local search
-    for (int na = 0; na < n_apps; ++na) {
-
-        // the computation time starts now
-        Timer timer;
-
-        // Example for requesting the elapsed computation time at any moment: 
-        // double ct = timer.elapsed_time(Timer::VIRTUAL);
-
-        cout << "start application " << na + 1 << endl;
+        read_parameters(argc,argv);
         
+        // setting the output format for doubles to 2 decimals after the comma
+        std::cout << std::setprecision(2) << std::fixed;
 
-        // Solució inicial (tots els vertex)
+        // initializing the random number generator.
+        // A random number in (0,1) is obtained with: double rnum = rnd->next();
+        rnd = new Random((unsigned) time(&t));
+        rnd->next();
 
-        set<int> S;                 // S will contain the final solution
-        vector<set<int>> initial_neighbors = neighbors;
+        // vectors for storing the result and the computation time 
+        // obtained by the <n_apps> applications of local search
+        vector<double> results(n_apps, std::numeric_limits<int>::max());
+        vector<double> times(n_apps, 0.0);
 
-        MergeSort(neighbors, 0, neighbors.size()-1);            // ordenem primer els vertexs respecte el seu grau de manera ascendent
-        greedy(neighbors, S);
-
-        set<int> actual = S;
-
-        bool end = false;
-
-        /*
-        for(int i = 0; i < initial_neighbors.size(); ++i) {
-            cout << "Vertex :" << i << "  Veins: ";
-            for (set<int>::iterator it = initial_neighbors[i].begin(); it != initial_neighbors[i].end(); ++it) {
-                cout << *it << " ";
-            }
-            cout << endl;
+        // opening the corresponding input file and reading the problem data
+        ifstream indata;
+        indata.open(inputFile.c_str());
+        if(not indata) { // file couldn't be opened
+            cout << "Error: file could not be opened" << endl;
         }
-        */
 
-       set<int>::iterator last = actual.begin();
-        
-       cout << actual.size() << endl;
+        indata >> n_of_nodes;
+        indata >> n_of_arcs;
+        neighbors = vector< set<int> >(n_of_nodes);
+        int u, v;
+        while(indata >> u >> v) {
+            neighbors[u - 1].insert(v - 1);
+            neighbors[v - 1].insert(u - 1);
+        }
+        indata.close();
 
-       set<int> solaux;
+        // main loop over all applications of local search
+        for (int na = 0; na < n_apps; ++na) {
+
+            // the computation time starts now
+            Timer timer;
+
+            // Example for requesting the elapsed computation time at any moment: 
+            // double ct = timer.elapsed_time(Timer::VIRTUAL);
+
+            cout << "start application " << na + 1 << endl;
+            
+
+            // Solució inicial (tots els vertex)
+
+            set<int> S;                 // S will contain the final solution
+            vector<set<int>> initial_neighbors = neighbors;
+            /*
+            MergeSort(neighbors, 0, neighbors.size()-1);            // ordenem primer els vertexs respecte el seu grau de manera ascendent
+            greedy(neighbors, S);
+            */
+
+           for (int i = 0; i < neighbors.size(); i++) S.insert(i);  // Solucio inicial plena
+
+            set<int> actual = S;
+
+            bool end = false;
+
+            /*
+            for(int i = 0; i < initial_neighbors.size(); ++i) {
+                cout << "Vertex :" << i << "  Veins: ";
+                for (set<int>::iterator it = initial_neighbors[i].begin(); it != initial_neighbors[i].end(); ++it) {
+                    cout << *it << " ";
+                }
+                cout << endl;
+            }
+            */
+
+        set<int>::iterator last = actual.begin();
+            
+        cout << actual.size() << endl;
+
+        set<int> solaux;
+
+        set<int> not_sol;
+        for (int i = 0; i < initial_neighbors.size(); i++) {
+            if (actual.find(i) == actual.end()) not_sol.insert(i);
+        }
+
+
 
         while (not end) {
             
-            if (eliminateVertex(actual, initial_neighbors, solaux, last)) {
+            if (eliminateVertex(actual, initial_neighbors, solaux, last, not_sol)) {
+                cout << "Escollit erase" << endl;
                 actual = solaux;
             } else {
-                cout << "Starting swap" << endl;
-                if (nextSwap(actual, initial_neighbors, solaux)) {
+                //cout << "Starting swap" << endl;
+                if (nextSwap(actual, initial_neighbors, solaux, not_sol)) {
+                    cout << "Escollit swap" << endl;
                     actual = solaux;
                 } else {
                     end = true;
@@ -393,12 +408,12 @@ int main( int argc, char **argv ) {
         cout << actual.size() << endl;
 
         
-        /*
+        
         for (set<int>::iterator it = actual.begin(); it != actual.end(); ++it) { 
             cout << *it << " ";
         }
         cout << endl;
-        */
+        
         
         // HERE GOES YOUR LOCAL SEARCH METHOD
 
