@@ -265,6 +265,7 @@ bool nextSwap(set<int> &actual, vector< set<int>>& neighbors, set<int>& newsol) 
         for (int i = 0; i < n; ++i) {
             set<int> aux = actual;
             if (actual.find(i) == actual.end()) {
+                cout << "Swapping vertex " << *it << " for vertex " << i << endl;
                 swap(aux, *it,  i);
                 if (is_Solution(aux, neighbors, *it )) {
                     if (primer) {
@@ -374,10 +375,11 @@ int main( int argc, char **argv ) {
        set<int> solaux;
 
         while (not end) {
-
+            
             if (eliminateVertex(actual, initial_neighbors, solaux, last)) {
                 actual = solaux;
             } else {
+                cout << "Starting swap" << endl;
                 if (nextSwap(actual, initial_neighbors, solaux)) {
                     actual = solaux;
                 } else {
