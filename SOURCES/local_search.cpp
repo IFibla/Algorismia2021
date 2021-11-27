@@ -92,176 +92,47 @@ void read_parameters(int argc, char **argv) {
     }
 }
 
-void MergeSortedIntervals(vector<set<int> >& v, int s, int m, int e) {
-
-    // temp is used to temporary store the vector obtained by merging
-    // elements from [s to m] and [m+1 to e] in v
-    vector<set<int> > temp;
-
-    int i, j;
-    i = s;
-    j = m + 1;
-
-    while (i <= m && j <= e) {
-
-        if (v[i].size() <= v[j].size()) {
-            temp.push_back(v[i]);
-            ++i;
-        }
-        else {
-            temp.push_back(v[j]);
-            ++j;
-        }
-
-    }
-
-    while (i <= m) {
-        temp.push_back(v[i]);
-        ++i;
-    }
-
-    while (j <= e) {
-        temp.push_back(v[j]);
-        ++j;
-    }
-
-    for (int i = s; i <= e; ++i)
-        v[i] = temp[i - s];
-
+void printSolution(const set<int> &solution) {
+    for (int i : solution) cout << i << " ";
+    cout << endl;
 }
 
-// the MergeSort function
-// Sorts the array in the range [s to e] in v using
-// merge sort algorithm
-void MergeSort(vector<set<int> >& v, int s, int e) {
-    if (s < e) {
-        int m = (s + e) / 2;
-        MergeSort(v, s, m);
-        MergeSort(v, m + 1, e);
-        MergeSortedIntervals(v, s, m, e);
-    }
+int count_neighbors(const vector<set<int>> &solution, int neighbor) {
+    int actual_neighbors = 0;
+    for (set<int> vertex : solution) if (vertex.find(neighbor) != vertex.end()) actual_neighbors++;
+    return actual_neighbors;
 }
 
-int computeH(const set<int>& v, set<int>& S) {
-
-    int compt = 0;
-    for (int a : v) {                                   // per tot vei de a
-        std::set<int>::iterator it = S.find(a);
-        if (it != S.end()) ++compt;                     // Veins de v a S
-    }
-
-    int n = ceil(float(v.size())/2);                    // upper bound de grau(v)/2
-    return n-compt;
-}
-
-int cover_degree(const vector<set<int> >& G, set<int>& S, set<int>& SC, int i) {
-
-    int argMax = 0;
-    int aux = 0;
-    int nCoverMax = -1;
-
-    for (int a : G[i]) {
-
-        std::set<int>::iterator it = SC.find(a);
-        int covered = 0;
-        if (it != SC.end()) {
-            for (int aresta : G[a]) {
-                if (computeH(G[aresta], S) > 0) {
-                    ++covered;
-                    aux = aresta;
-                }
-            }
-
-            if (covered > nCoverMax) {
-                nCoverMax = covered;
-                argMax = a;
-            }
-        }
-    }
-    return argMax;
-}
-
-void greedy(const vector<set<int> >& G, set<int>& S) {
-
-    int n = G.size();
-    set<int> SC;
-    for (int i = 0; i < n; ++i) {
-        SC.insert(i);
-    }
-
-    for (int i = 0; i < n; ++i) {
-
-        int p = computeH(G[i], S);                  // mirem si el vertex i esta cobert
-        if (p > 0) {
-        
-            for (int j = 0; j < p; ++j) {
-                int argmax = cover_degree(G, S, SC, i);             // cover degree dels vertexs adjacents a i que estan en SC
-                S.insert(argmax);
-                SC.erase(argmax);
-            }
-        }
-    }
-}
-
-double getHeuristic(const set<int> &solution, const vector<set<int>> &neighbors, int& weight, int e) {
-    int aux = weight;
-    for(set<int>::iterator it2 = neighbors[e].begin(); it2 != neighbors[e].end(); ++it2) {
-        if (solution.find(*it2) == solution.end()) aux -= 1;
-    }
-    return aux;
-}
-
-bool is_Solution(const set<int> &solution, const vector<set<int>> &neighbours, const int &j) {
-    //cout << "Deleted from solution vertex " << j << endl;
-    for (int i : neighbours[j]) {
-        int needed_neighbors = round(neighbours[i].size() / 2.0);
-        //cout << "Seeing if neighbor " << i << " has enough vertex. (Needed: " << neighbours[i].size() / 2.0 << ")." << endl;
-        //cout << i << "'s first neighbor is " << *(neighbours[i].begin()) << endl;
-        int counted_neighbors = 0;
-        for (set<int>::iterator it = neighbours[i].begin(); it != neighbours[i].end(); it++) {
-            if (solution.find(*it) != solution.end()) {
-                //cout << "FOUND A NEIGHBOR: " << *it << endl;
-                counted_neighbors++;
-            }
-        }
-        //cout << "Found " << counted_neighbors << " counted neighbors." << endl << endl;
-        if (counted_neighbors < needed_neighbors) return false;
+bool is_solution(const vector<int> &neighborsSize, const vector<set<int>> &neighbors, int deletedVertex) {
+    for (int neighbor : neighbors[deletedVertex]) {
+        int needed_neighbors = round(neighbors[neighbor].size() / 2.0);
+        if (neighborsSize[neighbor] - 1 < needed_neighbors) return false;
     }
     return true;
 }
 
-vector<set<int>> generateSuccessors(set<int> &actual, vector< set<int>>& neighbors, vector<int>& weightV,int& weight) {
-   int n = actual.size();
-   vector<set<int>> successors;
-   for (set<int>::iterator it = actual.begin(); it != actual.end(); ++it) {
-       set<int> aux = actual;
-       aux.erase(*it);
-       if (is_Solution(aux, neighbors, *it)) {
-           weightV.push_back(getHeuristic(aux, neighbors, weight, *it));
-           successors.push_back(aux);
-       }
-   }
-   return successors;
-}
-
-set<int> getBetterSon(vector<set<int>> succesors,vector< set<int>>& neighbors,vector<int>& weightV) {
-    bool primer = true;
-    int mesPes;
-    int n = succesors.size();
-    for(int i = 0; i < n; ++i) {
-        if (primer) {
-            mesPes = i;
-            primer = false;
-        }
-        else {
-            if (weightV[mesPes] < weightV[i]) {
-                mesPes = i;
-            }
+vector<pair<int, int>> generate_successors(const set<int> &solutionVertexs, const vector<int> &neighborsSize, pair<int, int> solutionInfo, const vector<set<int>> &neighbors) {
+    vector<pair<int, int>> successors;
+    for (int i : solutionVertexs) {
+        pair<int, int> successor(solutionInfo.first, i);
+        if(is_solution(neighborsSize, neighbors, i)) {
+            successor.first--;
+            successors.push_back(successor);
         }
     }
-    return succesors[mesPes];
+    return successors;
 }
 
+double getHeuristic(const vector<set<int>> &neighbors, pair<int, int> solutionInfo) {
+
+    int solutionSize = solutionInfo.first;
+    int lastDeletedVertex = solutionInfo.second;
+
+    if (neighbors[lastDeletedVertex].size() != 0)
+        return solutionSize - 1 / double(neighbors[lastDeletedVertex].size());
+    else
+        return solutionSize - 1;
+}
 
 /**********
 Main function
@@ -312,80 +183,60 @@ int main( int argc, char **argv ) {
 
         cout << "start application " << na + 1 << endl;
 
-        // Solució inicial (tots els vertex)
-
-        set<int> S;                 // S will contain the final solution
-        vector<set<int>> initial_neighbors = neighbors;
-
-        MergeSort(neighbors, 0, neighbors.size()-1);            // ordenem primer els vertexs respecte el seu grau de manera ascendent
-        greedy(neighbors, S);
-
-        set<int> actual = S;
-
-        bool end = false;
-
-        /*
-        cout << "First solution: " << endl;
-        for (int i : actual) cout << i << " ";
-        cout << endl;
-        */
-
-        vector<int> weightV;
-
-        int weight = 0;
-
-        for(int i = 0; i < initial_neighbors.size(); ++i) {
-            if (actual.find(i) == actual.end()) {
-                for (set<int>::iterator it = initial_neighbors[i].begin(); it != initial_neighbors[i].end(); ++it) {
-                    if (actual.find(*it) == actual.end()) weight += 1;
-                }
-            }
-        }
-       
-        
-       cout << actual.size() << endl;
-
-        while (not end) {
-            vector<set<int>> succesors = generateSuccessors(actual, initial_neighbors, weightV, weight);
-            if (succesors.size() != 0) {
-                actual = getBetterSon(succesors, initial_neighbors, weightV);
-                cout << "Successor size " << succesors.size() << endl;
-                cout << actual.size() << endl;
-            } else {
-                end = true;
-            }
-            /*
-            cout << "New solution: " << endl;
-            for (int i : actual) cout << i << " ";
-            cout << endl;
-            */
-        }
-
-        cout << actual.size() << endl;
-        for(set<int>::iterator it = actual.begin(); it != actual.end(); ++it) {
-            cout << *it << endl;
-        }
-
         // HERE GOES YOUR LOCAL SEARCH METHOD
 
         // The starting solution for local search may be randomly generated, 
         // or you may incorporate your greedy heuristic in order to produce 
         // the starting solution.
-        
-        // Empty initial solution
+
+        set<int> solutionVertexs;
+        for (int i = 0; i < neighbors.size(); i++) solutionVertexs.insert(i);
+        pair<int, int> solutionInfo(solutionVertexs.size(), -1); // first --> size, second --> lastDeletedVertex
+        vector<int> neighborsSize;
+        for (int i = 0; i < neighbors.size(); i++) neighborsSize.push_back(neighbors[i].size());
+        double HeurActual = getHeuristic(neighbors, solutionInfo);
+
+        bool end = false;
+        while (not end) {
+            vector<pair<int, int>> successorsInfo = generate_successors(solutionVertexs, neighborsSize ,solutionInfo, neighbors);
+            bool foundSuccessor = false;
+            for (pair<int, int> successorInfo : successorsInfo) {
+                double HeurPossible = getHeuristic(neighbors, successorInfo);
+                if (HeurPossible < HeurActual) {
+                    solutionInfo = successorInfo;
+                    HeurActual = HeurPossible;
+                    foundSuccessor = true;
+                }
+            }
+            if (foundSuccessor) {
+                solutionVertexs.erase(solutionInfo.second);
+                for (int neighbor : neighbors[solutionInfo.second]) neighborsSize[neighbor]--;
+            }
+            else end = true;
+
+            // cout << "New solution: " << endl;
+            // printSolution(solution);
+            cout << "SOLUTION SIZE: " << solutionInfo.first << endl;
+        }
+
+        double ct = timer.elapsed_time(Timer::VIRTUAL);
+
         // Whenever you move to a new solution, first take the computation 
         // time as explained above. Say you store it in variable ct.
         // Then, write the following to the screen: 
-        // cout << "value " << <value of the current solution>;
-        // cout << "\ttime " << ct << endl;
+        cout << "Solution: " << endl;
+        printSolution(solutionVertexs);
+
+        cout << "value: " << solutionVertexs.size();
+        cout << "\ttime: " << ct << endl;
 
         // When a local minimum is reached, store the value of the 
         // corresponding solution in vector results: 
-        // results[na] = <value of the local minimum>;
+        results[na] = solutionVertexs.size();
         
         // Finally store the needed computation time (that is, the time 
         // measured once the local minimum is reached) in vector times: 
-        // times[na] = ct;
+        times[na] = ct;
 
         cout << "end application " << na + 1 << endl;
     }
@@ -419,3 +270,4 @@ int main( int argc, char **argv ) {
     cout << r_best << "\t" << r_mean << "\t" << rsd << "\t";
     cout << t_mean << "\t" << tsd << endl;
 }
+
